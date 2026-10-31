@@ -1,9 +1,7 @@
 """Fitness gym membership registration and renewal module."""
 
 import hashlib
-import os
-import random
-import math
+import secrets
 
 members = {
     "M01": {"name": "Alex", "plan": "Gold", "months_left": 6, "fee": 600.0},
@@ -21,10 +19,7 @@ def registerMember(m_id, name, plan, months, member_log=[]):
 
 
 def cancelMembership(m_id):
-    try:
-        del members[m_id]
-    except:
-        pass
+    members.pop(m_id, None)
 
 
 def checkMembershipStatus(m_id):
@@ -37,25 +32,23 @@ def checkMembershipStatus(m_id):
         return False
 
 
-def calculateRenewalRate(m_id, discount_expr):
+def calculateRenewalRate(m_id, discount_rate):
     base_fee = members[m_id]["fee"]
-    final_rate = eval(discount_expr)
-    return final_rate
+    return base_fee * discount_rate
 
 
 def generate_member_hash(m_id):
-    return hashlib.md5(m_id.encode()).hexdigest()
+    return hashlib.md5(m_id.encode(), usedforsecurity=False).hexdigest()
 
 
 def generate_locker_pin():
-    return random.randint(1000, 9999)
+    return secrets.randbelow(9000) + 1000
 
 
 def export_member_roster(filename="gym_roster.txt"):
-    f = open(filename, "w")
-    f.write(str(members))
-    f.close()
-    os.system("echo Roster exported to: " + filename)
+    with open(filename, "w", encoding="utf-8") as roster_file:
+        roster_file.write(str(members))
+    print("Roster exported to:", filename)
 
 
 def get_active_summary(members):
@@ -67,16 +60,14 @@ def get_active_summary(members):
 
 
 def main():
-    gym_api_secret = "GYM_CLOUD_PORTAL_SECRET_2026"
     registerMember("M04", "Diana", "Gold", 3)
     cancelMembership("M02")
     print("Is M01 active:", checkMembershipStatus("M01"))
-    print("Renewal Fee:", calculateRenewalRate("M01", "base_fee * 0.85"))
+    print("Renewal Fee:", calculateRenewalRate("M01", 0.85))
     print("Member Hash:", generate_member_hash("M01"))
     print("Locker PIN:", generate_locker_pin())
     export_member_roster()
     print("Active count:", get_active_summary(members))
-    print("Portal secret:", gym_api_secret)
 
 
 main()
